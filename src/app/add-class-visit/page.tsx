@@ -17,6 +17,7 @@ const AddSpecialAimEvaluation = () => {
   const { user } = useAuth();
   
   const [selectedTeacher, setSelectedTeacher] = useState('');
+  const [selectedCycle, setSelectedCycle] = useState('');
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [formData, setFormData] = useState<SpecialAimClassEvaluationData | null>(null);
 
@@ -27,7 +28,7 @@ const AddSpecialAimEvaluation = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !selectedTeacher || !selectedAdmin || !formData) {
+    if (!user || !selectedTeacher || !selectedAdmin || !formData || !selectedCycle) {
       alert('الرجاء تعبئة جميع البيانات المطلوبة');
       return;
     }
@@ -37,6 +38,7 @@ const AddSpecialAimEvaluation = () => {
         type: 'special-aim-class',
         teacherId: selectedTeacher,
         evaluatorName: selectedAdmin.arabicName,
+        cycle: selectedCycle, // Adding cycle to the visit data
         ...formData,
         date: serverTimestamp(),
       };
@@ -82,7 +84,7 @@ const AddSpecialAimEvaluation = () => {
               <TeacherSelector 
                 onSelectTeacher={(teacherId, cycle) => {
                   setSelectedTeacher(teacherId);
-                  // Optionally, you can also handle the cycle if needed
+                  setSelectedCycle(cycle); // Save the cycle when teacher is selected
                 }} 
               />
             </CardContent>

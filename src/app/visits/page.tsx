@@ -8,18 +8,19 @@ import {
   onSnapshot,
   QuerySnapshot,
   DocumentData,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-// Define the interface for a visit record.
+// Define the interface for a visit record
 interface VisitRecord {
   id: string;
   teacherId: string;
   evaluatorName: string;
-  date: any; // Firestore timestamp. Consider importing and using Firestore Timestamp type if desired.
-  // Additional dynamic fields can be added as needed.
-  [key: string]: any;
+  date: Timestamp;
+  // For additional dynamic fields, we'll use a more specific type
+  [key: string]: string | Timestamp;
 }
 
 const VisitRecords = () => {
@@ -27,21 +28,33 @@ const VisitRecords = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Query all documents from any "visits" subcollection, ordered by date descending.
+    // Query all documents from any "visits" subcollection, ordered by date descending
     const visitsQuery = query(
       collectionGroup(db, "visits"),
       orderBy("date", "desc")
     );
 
-    // Listen to real-time updates.
+    // Listen to real-time updates
     const unsubscribe = onSnapshot(
       visitsQuery,
       (querySnapshot: QuerySnapshot<DocumentData>) => {
         const visitsList: VisitRecord[] = [];
         querySnapshot.forEach((doc) => {
-          // Cast the document data to the expected type (excluding the id, which we add separately).
-          const data = doc.data() as Omit<VisitRecord, 'id'>;
-          visitsList.push({ id: doc.id, ...data });
+          const data = doc.data();
+          // Ensure we're creating a properly typed VisitRecord
+          const visit: VisitRecord = {
+            id: doc.id,
+            teacherId: data.teacherId,
+            evaluatorName: data.evaluatorName,
+            date: data.date,
+            ...Object.entries(data)
+              .filter(([key]) => !['teacherId', 'evaluatorName', 'date'].includes(key))
+              .reduce((acc, [key, value]) => ({
+                ...acc,
+                [key]: value as string | Timestamp
+              }), {})
+          };
+          visitsList.push(visit);
         });
         setVisits(visitsList);
         setLoading(false);
@@ -52,7 +65,6 @@ const VisitRecords = () => {
       }
     );
 
-    // Cleanup the subscription when the component unmounts.
     return () => unsubscribe();
   }, []);
 
@@ -84,19 +96,16 @@ const VisitRecords = () => {
                 </p>
                 <p>
                   <strong>التاريخ:</strong>{" "}
-                  {visit.date?.toDate
-                    ? visit.date.toDate().toLocaleString()
-                    : visit.date}
+                  {visit.date.toDate().toLocaleString()}
                 </p>
-                {/* Optionally render additional fields */}
-                {Object.keys(visit)
-                  .filter(
-                    (key) =>
-                      !["id", "teacherId", "evaluatorName", "date", "type"].includes(key)
+                {/* Render additional fields */}
+                {Object.entries(visit)
+                  .filter(([key]) => 
+                    !["id", "teacherId", "evaluatorName", "date", "type"].includes(key)
                   )
-                  .map((key) => (
+                  .map(([key, value]) => (
                     <p key={key}>
-                      <strong>{key}:</strong> {visit[key]}
+                      <strong>{key}:</strong> {String(value)}
                     </p>
                   ))}
               </CardContent>

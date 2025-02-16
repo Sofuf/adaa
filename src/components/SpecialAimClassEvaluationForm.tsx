@@ -8,6 +8,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
+type EvaluationStatus = 'محقق' | 'محقق جزئياً' | 'غير محقق';
+
+interface EvaluationArea {
+  status: EvaluationStatus;
+  notes: string;
+  recommendations: string;
+  supportProcedures: string;
+}
+
+interface ManagementAndInteraction {
+  planningCoverage: EvaluationArea;
+  lessonPlanning: EvaluationArea;
+}
+
 export interface SpecialAimClassEvaluationData {
   visitNumber: string;
   school: string;
@@ -23,21 +37,7 @@ export interface SpecialAimClassEvaluationData {
   wasTeacherTrained: 'yes' | 'no';
   trainingType: string;
   evaluationAreas: {
-    managementAndInteraction: {
-      planningCoverage: {
-        status: 'محقق' | 'محقق جزئياً' | 'غير محقق';
-        notes: string;
-        recommendations: string;
-        supportProcedures: string;
-      };
-      lessonPlanning: {
-        status: 'محقق' | 'محقق جزئياً' | 'غير محقق';
-        notes: string;
-        recommendations: string;
-        supportProcedures: string;
-      };
-    };
-    // Other evaluation areas can be added here following the same structure
+    managementAndInteraction: ManagementAndInteraction;
   };
 }
 
@@ -78,7 +78,7 @@ const SpecialAimClassEvaluationForm = ({ onFormDataChange }: SpecialAimClassEval
     }
   });
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: keyof Omit<SpecialAimClassEvaluationData, 'evaluationAreas'>, value: string) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
       onFormDataChange(newData);
@@ -86,16 +86,20 @@ const SpecialAimClassEvaluationForm = ({ onFormDataChange }: SpecialAimClassEval
     });
   };
 
-  const handleEvaluationAreaChange = (area: string, subArea: string, field: string, value: string) => {
+  const handleEvaluationAreaChange = (
+    subArea: keyof ManagementAndInteraction,
+    field: keyof EvaluationArea,
+    value: string
+  ) => {
     setFormData(prev => {
       const newData = {
         ...prev,
         evaluationAreas: {
           ...prev.evaluationAreas,
-          [area]: {
-            ...prev.evaluationAreas[area],
+          managementAndInteraction: {
+            ...prev.evaluationAreas.managementAndInteraction,
             [subArea]: {
-              ...prev.evaluationAreas[area][subArea],
+              ...prev.evaluationAreas.managementAndInteraction[subArea],
               [field]: value
             }
           }
@@ -129,8 +133,8 @@ const SpecialAimClassEvaluationForm = ({ onFormDataChange }: SpecialAimClassEval
               />
             </div>
             <div>
-              <Label>اسم المعلم / Teacher's Name</Label>
-              <Input
+            <Label>اسم المعلم / Teacher&apos;s Name</Label>
+            <Input
                 value={formData.teacherName}
                 onChange={(e) => handleInputChange('teacherName', e.target.value)}
               />
@@ -200,7 +204,7 @@ const SpecialAimClassEvaluationForm = ({ onFormDataChange }: SpecialAimClassEval
             <Label>هل تم تدريب المعلم على جوانب التركيز؟ / Was Teacher trained on areas of concentration?</Label>
             <RadioGroup
               value={formData.wasTeacherTrained}
-              onValueChange={(value) => handleInputChange('wasTeacherTrained', value)}
+              onValueChange={(value: 'yes' | 'no') => handleInputChange('wasTeacherTrained', value)}
               className="flex space-x-4"
             >
               <div className="flex items-center space-x-2">
@@ -232,17 +236,17 @@ const SpecialAimClassEvaluationForm = ({ onFormDataChange }: SpecialAimClassEval
         </CardHeader>
         <CardContent>
           <div className="space-y-8">
-            {/* Management and Class Interaction Section */}
             <div>
               <h3 className="font-semibold mb-4">رابعاً: الإدارة والتفاعل الصفي / Management and Class Interaction</h3>
               
-              {/* Planning Coverage Evaluation */}
               <div className="space-y-4 border-b pb-6 mb-6">
                 <div>
                   <Label>يغطي التخطيط جميع جوانب الموقف الصفي (متكاملة العناصر)</Label>
                   <Select
                     value={formData.evaluationAreas.managementAndInteraction.planningCoverage.status}
-                    onValueChange={(value) => handleEvaluationAreaChange('managementAndInteraction', 'planningCoverage', 'status', value)}
+                    onValueChange={(value: EvaluationStatus) => 
+                      handleEvaluationAreaChange('planningCoverage', 'status', value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="اختر التقييم" />
@@ -258,7 +262,7 @@ const SpecialAimClassEvaluationForm = ({ onFormDataChange }: SpecialAimClassEval
                     <Label>الملاحظات الصفية / Class Notes</Label>
                     <Textarea
                       value={formData.evaluationAreas.managementAndInteraction.planningCoverage.notes}
-                      onChange={(e) => handleEvaluationAreaChange('managementAndInteraction', 'planningCoverage', 'notes', e.target.value)}
+                      onChange={(e) => handleEvaluationAreaChange('planningCoverage', 'notes', e.target.value)}
                     />
                   </div>
 
@@ -266,7 +270,7 @@ const SpecialAimClassEvaluationForm = ({ onFormDataChange }: SpecialAimClassEval
                     <Label>التوصيات / Recommendations</Label>
                     <Textarea
                       value={formData.evaluationAreas.managementAndInteraction.planningCoverage.recommendations}
-                      onChange={(e) => handleEvaluationAreaChange('managementAndInteraction', 'planningCoverage', 'recommendations', e.target.value)}
+                      onChange={(e) => handleEvaluationAreaChange('planningCoverage', 'recommendations', e.target.value)}
                     />
                   </div>
 
@@ -274,7 +278,7 @@ const SpecialAimClassEvaluationForm = ({ onFormDataChange }: SpecialAimClassEval
                     <Label>إجراءات الدعم المقدمة / Support Procedures</Label>
                     <Textarea
                       value={formData.evaluationAreas.managementAndInteraction.planningCoverage.supportProcedures}
-                      onChange={(e) => handleEvaluationAreaChange('managementAndInteraction', 'planningCoverage', 'supportProcedures', e.target.value)}
+                      onChange={(e) => handleEvaluationAreaChange('planningCoverage', 'supportProcedures', e.target.value)}
                     />
                   </div>
                 </div>

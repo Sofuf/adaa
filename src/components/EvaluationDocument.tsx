@@ -4,14 +4,14 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/firebaseConfig";
-import { deleteDoc, doc } from "firebase/firestore";
+import { deleteDoc, doc, Timestamp } from "firebase/firestore";
 import { useAuth } from "@/lib/authContext";
 
 interface Evaluation {
   id: string;
   teacherId: string;
   evaluatorId: string;
-  date: any;
+  date: Timestamp;
   cycle: string;
   evaluationScores: {
     overallScore: number;

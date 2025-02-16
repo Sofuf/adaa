@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 function FloatingPaths({ position }: { position: number }) {
   const paths = Array.from({ length: 36 }, (_, i) => ({
     id: i,
-    d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${380 - i * 5 * position
-      } -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${152 - i * 5 * position
-      } ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position
-      } ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
+    d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${380 - i * 5 * position}
+      -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${152 - i * 5 * position}
+      ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position}
+      ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
     color: `rgba(15,23,42,${0.1 + i * 0.03})`,
     width: 0.5 + i * 0.03,
-  }))
+  }));
 
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -41,16 +41,13 @@ function FloatingPaths({ position }: { position: number }) {
         ))}
       </svg>
     </div>
-  )
+  );
 }
 
-export default function BackgroundPaths({
-  title = "Adaa",
-}: {
-  title?: string
-}) {
-  const words = title.split(" ")
-  const router = useRouter()
+export default function Page() {
+  const title = "Adaa"; // Define title inside the component
+  const words = title.split(" ");
+  const router = useRouter();
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-white dark:bg-neutral-950">
@@ -97,8 +94,7 @@ export default function BackgroundPaths({
                         overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
           >
             <Button
-              onClick={() => router.push("/login")} // Navigate on click
-
+              onClick={() => router.push("/login")}
               variant="ghost"
               className="rounded-[1.15rem] px-8 py-6 text-lg font-semibold backdrop-blur-md 
                             bg-white/95 hover:bg-white/100 dark:bg-black/95 dark:hover:bg-black/100 
@@ -118,6 +114,5 @@ export default function BackgroundPaths({
         </motion.div>
       </div>
     </div>
-  )
+  );
 }
-

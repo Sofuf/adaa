@@ -18,6 +18,7 @@ import {
   getDocs,
   DocumentData,
   Query,
+  Timestamp,
 } from "firebase/firestore";
 import Sidebar from "@/components/Sidebar";
 import { useRouter } from "next/navigation";
@@ -25,27 +26,32 @@ import TeacherSelector from "@/components/TeacherSelector";
 import AdminSelector, { Admin } from "@/components/AdminSelector";
 import EvaluationDocument from "@/components/EvaluationDocument";
 
+interface EvaluationScores {
+  overallScore: number;
+  planningScore: number;
+  scientificCompetencyScore: number;
+  strategiesScore: number;
+  managementScore: number;
+  assessmentScore: number;
+  qualityScore: number;
+}
+
+interface MainInformation {
+  schoolName?: string;
+  teacherName?: string;
+}
+
 interface Evaluation {
   id: string;
   teacherId: string;
   evaluatorId: string;
-  date: any;
+  date: Timestamp;
   cycle: string;
-  evaluationScores: {
-    overallScore: number;
-    planningScore: number;
-    scientificCompetencyScore: number;
-    strategiesScore: number;
-    managementScore: number;
-    assessmentScore: number;
-    qualityScore: number;
-  };
+  evaluationScores: EvaluationScores;
   teacherName: string;
   evaluatorName: string;
-  pdfURL?: string;
-  mainInformation?: {
-    schoolName?: string;
-  };
+  pdfURL: string;
+  mainInformation?: MainInformation;
 }
 
 export default function EvaluationsPage() {
@@ -55,7 +61,6 @@ export default function EvaluationsPage() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>("");
-  const [selectedTeacherCycle, setSelectedTeacherCycle] = useState<string>("");
   const [selectedTeacherName, setSelectedTeacherName] = useState<string>("");
   const [selectedAdminId, setSelectedAdminId] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -121,7 +126,7 @@ export default function EvaluationsPage() {
               },
               teacherName: data.mainInformation?.teacherName || teacherName,
               evaluatorName: data.evaluatorName || "غير معروف",
-              pdfURL: data.pdfURL,
+              pdfURL: data.pdfURL || "",
               mainInformation: data.mainInformation,
             } as Evaluation;
           });
@@ -158,7 +163,7 @@ export default function EvaluationsPage() {
                 },
                 teacherName: data.mainInformation?.teacherName || teacherName,
                 evaluatorName: data.evaluatorName || "غير معروف",
-                pdfURL: data.pdfURL,
+                pdfURL: data.pdfURL || "",
                 mainInformation: data.mainInformation,
               } as Evaluation;
             });
@@ -181,7 +186,7 @@ export default function EvaluationsPage() {
           });
         }
 
-        evaluationsData.sort((a, b) => b.date?.toMillis() - a.date?.toMillis());
+        evaluationsData.sort((a, b) => b.date.toMillis() - a.date.toMillis());
         setEvaluations(evaluationsData);
       } catch (error) {
         console.error("Error fetching evaluations:", error);
@@ -200,7 +205,7 @@ export default function EvaluationsPage() {
     selectedTeacherName,
   ]);
 
-  const formatDate = (date: any) => {
+  const formatDate = (date: Timestamp) => {
     if (!date) return "N/A";
     return new Date(date.toMillis()).toLocaleDateString("en-GB");
   };
@@ -222,9 +227,8 @@ export default function EvaluationsPage() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <TeacherSelector
-              onSelectTeacher={(teacherId, cycle, teacherName) => {
+              onSelectTeacher={(teacherId: string, cycle: string, teacherName: string) => {
                 setSelectedTeacherId(teacherId);
-                setSelectedTeacherCycle(cycle);
                 setSelectedTeacherName(teacherName);
               }}
             />
@@ -311,8 +315,7 @@ export default function EvaluationsPage() {
               </Table>
             </div>
           </CardContent>
-        </Card>
-      </main>
+        </Card>      </main>
 
       {selectedEvaluation && (
         <EvaluationDocument

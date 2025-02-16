@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,6 @@ interface TeacherData {
 }
 
 const AddTeacherManual = () => {
-  const router = useRouter();
   const { user } = useAuth();
   const [selectedCycle, setSelectedCycle] = useState<string>('');
   const [teacherData, setTeacherData] = useState<TeacherData>({

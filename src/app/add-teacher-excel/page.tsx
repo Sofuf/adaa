@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,8 +11,10 @@ import { useAuth } from "@/lib/authContext";
 import { db } from "@/lib/firebaseConfig";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
+// Define type for Excel row data
+type ExcelRow = (string | number | null)[];
+
 const AddTeacherExcel = () => {
-  const router = useRouter();
   const { user } = useAuth();
   const [selectedCycle, setSelectedCycle] = useState<string>('');
 
@@ -37,7 +38,7 @@ const AddTeacherExcel = () => {
         const data = e.target?.result;
         const workbook = XLSX.read(data, { type: 'binary' });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as ExcelRow[];
 
         // Process the Excel data using our parser
         const teachers = processExcelData(jsonData);

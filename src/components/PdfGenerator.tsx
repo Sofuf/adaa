@@ -1,14 +1,52 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable'; // For table generation
+import 'jspdf-autotable';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { professorStorage } from '@/lib/professorFirebaseConfig';
 import { CoreFormData } from './CoreForm';
 import { MainInformationFormData } from './MainInformationForm';
 import amiriFontBase64 from '@/assets/amiriFontBase64';
 import moeLogo from '@/assets/logos/moe-logo.png';
-
-// Import the arabic-reshaper package
 import * as ArabicReshaper from 'arabic-reshaper';
+
+// Define types for jsPDF with autoTable
+interface JsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: AutoTableOptions) => void;
+  lastAutoTable?: {
+    finalY: number;
+  };
+}
+
+// Define the structure for auto-table options
+interface AutoTableOptions {
+  startY: number;
+  head: string[][];
+  body: string[][];
+  styles: {
+    font: string;
+    fontSize: number;
+    halign: string;
+    cellPadding: number;
+    lineColor: number[];
+    lineWidth: number;
+  };
+  headStyles: {
+    fillColor: number[];
+    textColor: number;
+    halign: string;
+  };
+  columnStyles: {
+    [key: string]: {
+      cellWidth: string | number;
+      fontStyle?: string;
+    };
+  };
+  margin: {
+    left: number;
+    right: number;
+  };
+  tableLineColor: number[];
+  tableLineWidth: number;
+}
 
 interface PDFGeneratorProps {
   mainInformation: MainInformationFormData;
@@ -16,6 +54,11 @@ interface PDFGeneratorProps {
   evaluatorName: string;
   teacherId: string;
   cycle: string;
+}
+
+interface FeedbackRow {
+  category: string;
+  detail: string;
 }
 
 export async function generateAndSavePDF({
@@ -26,7 +69,7 @@ export async function generateAndSavePDF({
   cycle,
 }: PDFGeneratorProps): Promise<string> {
   // Create a new PDF document with compression enabled
-  const doc = new jsPDF({ compress: true });
+  const doc = new jsPDF({ compress: true }) as JsPDFWithAutoTable;
 
   // Add the Amiri font to the PDF for proper Arabic rendering
   doc.addFileToVFS("Amiri-Regular.ttf", amiriFontBase64);
@@ -37,10 +80,8 @@ export async function generateAndSavePDF({
   const pageHeight = doc.internal.pageSize.getHeight();
 
   // --- Header Section ---
-  // Adjusted logo size: width 25, height 20
   const logoWidth = 25;
   const logoHeight = 20;
-  // Use moeLogo.src directly since moeLogo is a StaticImageData
   doc.addImage(
     moeLogo.src,
     'PNG',
@@ -96,15 +137,14 @@ export async function generateAndSavePDF({
   doc.text(feedbackHeader, pageWidth / 2, yPos, { align: "center" });
 
   // Feedback table data
-  const feedbackData = [
+  const feedbackData: FeedbackRow[] = [
     { category: "نقاط القوة / Strengths", detail: coreForm.strengths },
     { category: "نقاط التحسين / Areas for Improvement", detail: coreForm.improvements },
     { category: "ملاحظات المعلم / Teacher Feedback", detail: coreForm.teacherFeedback }
   ];
 
   yPos += 5;
-  // Cast doc to any to bypass TypeScript errors for autoTable
-  (doc as any).autoTable({
+  doc.autoTable({
     startY: yPos,
     head: [["التفاصيل / Detail", "الفئة / Category"]],
     body: feedbackData.map(item => [item.detail, item.category]),
@@ -130,8 +170,7 @@ export async function generateAndSavePDF({
     tableLineWidth: 0.5,
   });
 
-  // Use optional chaining to avoid undefined errors
-  const finalY = (doc as any).lastAutoTable?.finalY || yPos + 40;
+  const finalY = doc.lastAutoTable?.finalY || yPos + 40;
 
   // --- Evaluator Information Section ---
   yPos = finalY + 20;

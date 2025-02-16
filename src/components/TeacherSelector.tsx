@@ -1,4 +1,3 @@
-// TeacherSelector.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -7,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 import { useAuth } from "@/lib/authContext";
-import { Card, CardContent } from "@/components/ui/card";
 
 interface Teacher {
   id: string;
@@ -16,7 +14,7 @@ interface Teacher {
 }
 
 interface TeacherSelectorProps {
-  onSelectTeacher: (teacherId: string, cycle: string) => void;
+  onSelectTeacher: (teacherId: string, cycle: string, teacherName: string) => void;
 }
 
 const TeacherSelector = ({ onSelectTeacher }: TeacherSelectorProps) => {
@@ -67,7 +65,14 @@ const TeacherSelector = ({ onSelectTeacher }: TeacherSelectorProps) => {
   }, [search, teachers]);
 
   const handleTeacherSelect = (teacherId: string) => {
-    onSelectTeacher(teacherId, selectedCycle);
+    const selectedTeacher = teachers.find(teacher => teacher.id === teacherId);
+    if (selectedTeacher) {
+      onSelectTeacher(
+        teacherId, 
+        selectedCycle, 
+        selectedTeacher.arabicName
+      );
+    }
   };
 
   return (

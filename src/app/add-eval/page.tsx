@@ -1,9 +1,6 @@
-// add-eval/page.tsx
-
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import AdminSelector, { Admin } from "@/components/AdminSelector";
@@ -15,9 +12,9 @@ import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/fires
 import EvaluationForm from "@/components/EvaluationForm";
 import MainInformationForm, { MainInformationFormData } from "@/components/MainInformationForm";
 import CoreForm, { CoreFormData } from "@/components/CoreForm";
-import { generateAndSavePDF } from "@/components/PdfGenerator"; // Import the PDF generator
-import { Loader2 } from "lucide-react"; // Import loading spinner
-import Send2Email from "@/components/Send2Mail"; // Import the Send2Email component
+import { generateAndSavePDF } from "@/components/PdfGenerator";
+import { Loader2 } from "lucide-react";
+import Send2Email from "@/components/Send2Mail";
 
 interface TeacherInfo {
   name: string;
@@ -36,11 +33,9 @@ interface EvaluationScores {
 }
 
 const AddEvaluation = () => {
-  const router = useRouter();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form state
   const [selectedTeacher, setSelectedTeacher] = useState("");
   const [selectedCycle, setSelectedCycle] = useState("");
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
@@ -50,7 +45,6 @@ const AddEvaluation = () => {
     oracle: "",
   });
 
-  // Form data state
   const [mainInfoData, setMainInfoData] = useState<MainInformationFormData>({
     schoolName: "",
     clusterManager: "",
@@ -85,15 +79,12 @@ const AddEvaluation = () => {
     qualityScore: 0,
   });
 
-  // Local state to store the generated PDF URL
   const [generatedPDFUrl, setGeneratedPDFUrl] = useState<string>("");
 
-  // Update scores handler
   const handleScoresUpdate = (scores: EvaluationScores) => {
     setEvaluationScores(scores);
   };
 
-  // Teacher selection handler
   const handleTeacherSelect = async (teacherId: string, cycle: string) => {
     setSelectedTeacher(teacherId);
     setSelectedCycle(cycle);
@@ -110,7 +101,6 @@ const AddEvaluation = () => {
           oracle: teacherData.oracle || "",
         });
 
-        // Update main information form with teacher data
         setMainInfoData(prev => ({
           ...prev,
           teacherName: teacherData.arabicName || "",
@@ -123,9 +113,8 @@ const AddEvaluation = () => {
     }
   };
 
-  // Form validation
   const validateForm = () => {
-    if (!selectedTeacher || !selectedAdmin || !selectedCycle) {
+    if (!selectedTeacher || !selectedAdmin?.arabicName || !selectedCycle) {
       alert("الرجاء تعبئة جميع البيانات المطلوبة");
       return false;
     }
@@ -143,16 +132,14 @@ const AddEvaluation = () => {
     return true;
   };
 
-  // Submit handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm() || !user) return;
+    if (!validateForm() || !user || !selectedAdmin) return;
     
     setIsSubmitting(true);
   
     try {
-      // Generate and save the PDF
       const pdfURL = await generateAndSavePDF({
         mainInformation: mainInfoData,
         coreForm: coreFormData,
@@ -165,17 +152,15 @@ const AddEvaluation = () => {
         throw new Error("PDF URL generation failed.");
       }
       
-      // Store the PDF URL locally so we can pass it to the email component
       setGeneratedPDFUrl(pdfURL);
   
-      // Create evaluation object with the PDF link
       const evaluation = {
         teacherId: selectedTeacher,
         evaluatorName: selectedAdmin.arabicName,
         mainInformation: mainInfoData,
         coreForm: coreFormData,
         evaluationScores,
-        pdfURL, // Store the PDF link
+        pdfURL,
         date: serverTimestamp(),
         cycle: selectedCycle,
         createdBy: user.uid,
@@ -188,8 +173,6 @@ const AddEvaluation = () => {
       );
   
       alert("تم حفظ التقييم بنجاح");
-      // Optionally, you can redirect if needed:
-      // router.push("/evaluations");
     } catch (error) {
       console.error("Error saving evaluation:", error);
       alert("حدث خطأ في حفظ التقييم");
@@ -205,7 +188,6 @@ const AddEvaluation = () => {
         <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-8">إضافة تقييم جديد</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6 max-w-3xl mx-auto">
-          {/* Teacher Selection */}
           <Card className="shadow-sm">
             <CardHeader className="p-4 md:p-6">
               <CardTitle className="text-lg md:text-xl">اختر المعلم</CardTitle>
@@ -215,7 +197,6 @@ const AddEvaluation = () => {
             </CardContent>
           </Card>
 
-          {/* Main Information Form */}
           <Card className="shadow-sm">
             <CardHeader className="p-4 md:p-6">
               <CardTitle className="text-lg md:text-xl">معلومات المعلم</CardTitle>
@@ -230,7 +211,6 @@ const AddEvaluation = () => {
             </CardContent>
           </Card>
 
-          {/* Admin Selection */}
           <Card className="shadow-sm">
             <CardHeader className="p-4 md:p-6">
               <CardTitle className="text-lg md:text-xl">اختر المقيّم</CardTitle>
@@ -240,12 +220,10 @@ const AddEvaluation = () => {
             </CardContent>
           </Card>
 
-          {/* Evaluation Form */}
           <div className="bg-white rounded-lg shadow-sm">
             <EvaluationForm onScoresUpdate={handleScoresUpdate} />
           </div>
 
-          {/* Core Form */}
           <Card className="shadow-sm">
             <CardHeader className="p-4 md:p-6">
               <CardTitle className="text-lg md:text-xl">معلومات التغذية الراجعة</CardTitle>
@@ -255,7 +233,6 @@ const AddEvaluation = () => {
             </CardContent>
           </Card>
 
-          {/* Submit Button */}
           <Button 
             type="submit" 
             className="w-full md:w-auto md:min-w-[200px] md:mx-auto block"
@@ -272,7 +249,6 @@ const AddEvaluation = () => {
           </Button>
         </form>
 
-        {/* Render the Send2Email component if a PDF URL has been generated */}
         {generatedPDFUrl && (
           <div className="mt-4">
             <Send2Email 
